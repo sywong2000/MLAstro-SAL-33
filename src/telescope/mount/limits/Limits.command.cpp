@@ -56,7 +56,8 @@ bool Limits::command(char *reply, char *command, char *parameter, bool *suppress
     if (command[1] == 'h') {
       int16_t deg;
       if (convert.atoi2(parameter, &deg)) {
-        if (deg >= -30.0F && deg <= 30.0F) {
+        // change to -90.0F to allow horizon limits that specially works as a ALT-ALT configuration
+        if (deg >= -90.0F && deg <= 30.0F) {
           settings.altitude.min = degToRadF(deg);
           nv.updateBytes(NV_MOUNT_LIMITS_BASE, &settings, sizeof(LimitSettings));
         } else *commandError = CE_PARAM_RANGE;
