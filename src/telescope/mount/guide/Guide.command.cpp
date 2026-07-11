@@ -73,7 +73,21 @@ bool Guide::command(char *reply, char *command, char *parameter, bool *suppressF
     if (command[1] == 's' && parameter[0] == 0) {
       *commandError = startAxis2(GA_REVERSE, settings.axis2RateSelect, GUIDE_TIME_LIMIT*1000);
       *numericReply = false;
+    }
+     else
+    // :MN#       Move Telescope North at current guide rate - fixed direction without considering limits and pier side
+    //            Returns: Nothing
+    if (command[1] == 'N' && parameter[0] == 0) {
+      *commandError = startAxis2FixedDirection(GA_FORWARD, settings.axis2RateSelect, GUIDE_TIME_LIMIT*1000);
+      *numericReply = false;
     } else
+    // :MS#       Move Telescope South at current guide rate - fixed direction without considering limits and pier side
+    //            Returns: Nothing
+    if (command[1] == 'S' && parameter[0] == 0) {
+      *commandError = startAxis2FixedDirection(GA_REVERSE, settings.axis2RateSelect, GUIDE_TIME_LIMIT*1000);
+      *numericReply = false;
+    }
+    else
     // :Mp#       Move Telescope for sPiral search at current guide rate
     //            Returns: Nothing
     if (command[1] == 'p' && parameter[0] == 0) {
@@ -99,9 +113,9 @@ bool Guide::command(char *reply, char *command, char *parameter, bool *suppressF
       stopAxis1();
       *numericReply = false;
     } else
-    // :Qn# Qs#   Halt north/southward Slews
+    // :Qn# Qs# :QN# QS#  Halt north/southward Slews
     //            Returns: Nothing
-    if ((command[1] == 'n' || command[1] == 's') && parameter[0] == 0) {
+    if ((command[1] == 'n' || command[1] == 's' || command[1] == 'N' || command[1] == 'S' ) && parameter[0] == 0) {
       stopAxis2();
       *numericReply = false;
     } else return false;

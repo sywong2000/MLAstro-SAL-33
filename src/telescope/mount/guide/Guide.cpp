@@ -145,6 +145,49 @@ CommandError Guide::startAxis2(GuideAction guideAction, GuideRateSelect rateSele
   return CE_NONE;
 }
 
+
+// start guide at a given direction, FIXED direction without considering limits and pier side on Axis2
+CommandError Guide::startAxis2FixedDirection(GuideAction guideAction, GuideRateSelect rateSelect, unsigned long guideTimeLimit) {
+  if (guideAction == GA_NONE) return CE_NONE;
+  if (state == GU_HOME_GUIDE || state == GU_HOME_GUIDE_ABORT) return CE_NONE;
+
+  // CommandError e = validate(2, guideAction); // if successful always sets pierSide
+  // if (e != CE_NONE) return e;
+
+  guideActionAxis2 = guideAction;
+  float rate = rateSelectToRate(rateSelect, 2);
+  float fastestRate = rateSelectToRate(GR_MAX, 2)*((float)(AXIS2_SLEW_RATE_PERCENT)/100.0F);
+  if (rate > fastestRate) rate = fastestRate;
+
+  // unlimited 0 means the maximum period, about 49 days
+  if (guideTimeLimit == 0) guideTimeLimit = 0x1FFFFFFF;
+  guideFinishTimeAxis2 = millis() + guideTimeLimit;
+
+  if (rate <= 2) {
+    axis1.setPowerDownOverrideTime(300000UL);
+    axis2.setPowerDownOverrideTime(300000UL);
+  }
+
+  if (limits.isEnabled() && rate <= 2 && rateSelect != GR_CUSTOM) {
+    state = GU_PULSE_GUIDE;
+    backlashEnableControl(false);
+    if (pierSide == PIER_SIDE_WEST) { if (guideAction == GA_FORWARD) guideAction = GA_REVERSE; else guideAction = GA_FORWARD; };
+    if (guideAction == GA_REVERSE) { VF("MSG: Guide, Axis2 rev @"); rateAxis2 = -rate; } else { VF("MSG: Guide, Axis2 fwd @"); rateAxis2 = rate; }
+    V(rate); VL("X");
+    mount.update();
+  } else {
+    state = GU_GUIDE;
+    backlashEnableControl(true);
+    if (rateSelect != GR_CUSTOM) {
+      if (guideAction == GA_REVERSE) rate -= mount.trackingRateAxis2; else rate += mount.trackingRateAxis2;
+    }
+    axis2.setFrequencySlew(degToRadF(rate/240.0F));
+    axis2AutoSlewFixed(guideAction);
+  }
+
+  return CE_NONE;
+}
+
 // stop guide on Axis2, use GA_BREAK to stop in either direction or specifiy the direction to be stopped GA_FORWARD or GA_REVERSE
 // set abort true to rapidly stop (broken limit, etc)
 void Guide::stopAxis2(GuideAction stopDirection, bool abort) {
@@ -382,6 +425,12 @@ void Guide::axis2AutoSlew(GuideAction guideAction) {
       if (guideAction == GA_FORWARD) axis2.autoSlew(DIR_FORWARD);
   }
 }
+
+void Guide::axis2AutoSlewFixed(GuideAction guideAction) {
+  if (guideAction == GA_REVERSE) axis2.autoSlew(DIR_REVERSE); else
+    if (guideAction == GA_FORWARD) axis2.autoSlew(DIR_FORWARD);
+}
+
 
 // set guide spiral rates in RA/Azm and Dec/Alt, rate is in x-sidereal, guide elapsed time is in ms 
 void Guide::spiralPoll() {

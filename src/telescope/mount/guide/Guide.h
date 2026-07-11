@@ -44,6 +44,8 @@ class Guide {
 
     // start guide at a given direction and rate on Axis2
     CommandError startAxis2(GuideAction guideAction, GuideRateSelect rateSelect, unsigned long guideTimeLimit);
+    // start guide at a given direction, FIXED direction without considering limits and pier side on Axis2
+    CommandError startAxis2FixedDirection(GuideAction guideAction, GuideRateSelect rateSelect, unsigned long guideTimeLimit);
 
     // stop guide on Axis2, use GA_BREAK to stop in either direction or specifiy the direction to be stopped GA_FORWARD or GA_REVERSE
     // set abort true to rapidly stop (broken limit, etc)
@@ -110,6 +112,8 @@ class Guide {
 
     // start axis2 movement
     void axis2AutoSlew(GuideAction guideAction);
+    // start axis2 movement, FIXED direction without considering limits and pier side
+    void axis2AutoSlewFixed(GuideAction guideAction);
 
     GuideRateSelect spiralGuideRateSelect = GR_20X;
     
